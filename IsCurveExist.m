@@ -1,4 +1,9 @@
-function F = IsCurveExist(Y_0, Y_end, dy, d);
+function F = IsCurveExist(Y_0, Y_end, dy, d)
+% Функция возвращает true, если существует фазовая кривая вида
+% y' = c0 + c1*(y - y0) + c2*(y - y0)^2 + c3*(y - y0)^3 + d*(y - y0)^2*(y - yend)^2,
+% соединяющая
+% начальное положение Y_0 и конечное положение Y_end. dy - шаг разбиениения 
+global constr
 
 delta = Y_end(1) - Y_0(1);
 
@@ -21,10 +26,6 @@ Expr_1 = c1 + 2*c2*delta + 3*c3*delta^2;
 
 N = (Y_end(1) - Y_0(1))/dy + 1;
 
-% N=N*100;
-% 
-% dy = (Y_end(1) - Y_0(1)) / N;
-
 Psi = zeros(1,N);
 
 i = 1;
@@ -32,7 +33,7 @@ flag = 0;
 for y = Y_0(1):dy:Y_end(1)
     Psi(i) = c0 + c1*(y - Y_0(1)) + c2*(y - Y_0(1))^2 + c3*(y - Y_0(1))^3 + ...
         d*(y - Y_0(1))^2*(y - Y_end(1))^2;
-    if ((Psi(i) >= 1.05)||(Psi(i) <= 0))
+    if ((Psi(i) >= constr)||(Psi(i) <= 0))
         flag = 1;
     end
     i = i + 1;

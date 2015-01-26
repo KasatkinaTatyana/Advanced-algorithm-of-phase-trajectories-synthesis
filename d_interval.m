@@ -1,4 +1,8 @@
-function F = d_interval(Y_0, Y_end, dy, d0);
+function F = d_interval(Y_0, Y_end, dy, d0)
+% Определяются границы интервала по d, на котором не нарушается
+% ограничение. При условии что при d0 ограничение не нарушается.
+
+global constr
 
 delta = Y_end(1) - Y_0(1);
 
@@ -29,7 +33,12 @@ N = (Y_end(1) - Y_0(1))/dy + 1;
 
 Psi = zeros(1,N);
 
-h_d = 0.01;
+if (d0 > 0)
+    h_d = 0.01;
+end
+if (d0 < 0)
+    h_d = -0.01;
+end
 
 flag = 0;
 for d=d0:h_d:(10*d0)
@@ -37,7 +46,7 @@ for d=d0:h_d:(10*d0)
     for y = Y_0(1):dy:Y_end(1)
         Psi(i) = c0 + c1*(y - Y_0(1)) + c2*(y - Y_0(1))^2 + c3*(y - Y_0(1))^3 + ...
             d*(y - Y_0(1))^2*(y - Y_end(1))^2;
-        if ((Psi(i) >= 1.05)||(Psi(i) <= 0))
+        if ((Psi(i) >= constr)||(Psi(i) <= 0))
             flag = 1;
             break;
         end
@@ -56,7 +65,7 @@ for d=d0:(-h_d):(-10*d0)
     for y = Y_0(1):dy:Y_end(1)
         Psi(i) = c0 + c1*(y - Y_0(1)) + c2*(y - Y_0(1))^2 + c3*(y - Y_0(1))^3 + ...
             d*(y - Y_0(1))^2*(y - Y_end(1))^2;
-        if ((Psi(i) >= 1.05)||(Psi(i) <= 0))
+        if ((Psi(i) >= constr)||(Psi(i) <= 0))
             flag = 1;
             break;
         end
@@ -69,4 +78,8 @@ end
 
 d_min = d + h_d;
 
-F = [d_min d_max];
+if (d0 >= 0)
+    F = [d_min d_max];
+else
+    F = [d_max d_min];
+end
