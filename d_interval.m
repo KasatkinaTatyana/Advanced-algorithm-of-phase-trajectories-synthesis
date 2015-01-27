@@ -3,6 +3,7 @@ function F = d_interval(Y_0, Y_end, dy, d0)
 % ограничение. При условии что при d0 ограничение не нарушается.
 
 global constr
+global constr1 constr2
 
 delta = Y_end(1) - Y_0(1);
 
@@ -46,7 +47,7 @@ for d=d0:h_d:(10*d0)
     for y = Y_0(1):dy:Y_end(1)
         Psi(i) = c0 + c1*(y - Y_0(1)) + c2*(y - Y_0(1))^2 + c3*(y - Y_0(1))^3 + ...
             d*(y - Y_0(1))^2*(y - Y_end(1))^2;
-        if ((Psi(i) >= constr)||(Psi(i) <= 0))
+        if ((Psi(i) <= constr)||(Psi(i) <= 0))
             flag = 1;
             break;
         end
@@ -65,7 +66,11 @@ for d=d0:(-h_d):(-10*d0)
     for y = Y_0(1):dy:Y_end(1)
         Psi(i) = c0 + c1*(y - Y_0(1)) + c2*(y - Y_0(1))^2 + c3*(y - Y_0(1))^3 + ...
             d*(y - Y_0(1))^2*(y - Y_end(1))^2;
-        if ((Psi(i) >= constr)||(Psi(i) <= 0))
+        %-----1) y' < constr-----------------------------------------------
+        % if ((Psi(i) >= constr)||(Psi(i) <= 0))
+        %---- 2) y' > constr-----------------------------------------------
+        if ((Psi(i) <= constr)||(Psi(i) <= 0))
+        %------------------------------------------------------------------
             flag = 1;
             break;
         end

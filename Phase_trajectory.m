@@ -3,9 +3,12 @@ close all
 clc
 
 global constr
+global constr1 constr2
 % 1) y' < constr
+% 2) y' > constr
+% 3) constr1 < y' < constr2
 
-Y_0 = [0.1 0.2 0.5];
+Y_0 = [0.1 0.2   -0.05];
 Y_end = [2.5 0.5 0.5];
 
 N = 1000;
@@ -45,9 +48,9 @@ Psi = c0 + c1*(y - Y_0(1)) + c2*(y - Y_0(1)).^2 + c3*(y - Y_0(1)).^3;
 
 plot(y,Psi);
 
-constr = 0.9;
+constr = 0;
 
-N_shift = 1;
+N_shift = 50;
 
 cond = false;
 
@@ -55,9 +58,52 @@ d_min = -100;
 d_max = 100;
 hd = 0.01;
 
-% while not(cond)
+while not(cond)
+    flag = 0;
+    % Ищем границы интервала, на котором нарушается ограничение
+    for i=1:(N+1)
+        % ------- 1) y' < constr ------------------------------------------
+        % if ((flag == 0)&&(Psi(i) >= constr))
+        % ------- 2) y' > constr ------------------------------------------
+        if ((flag == 0)&&(Psi(i) <= constr))
+        % -----------------------------------------------------------------
+            y_left(1) = Y_0(1) + (i-1 - N_shift)*dy;  % отступили N_shift шагов назад от критической точки
+            y_left(2) = Psi(i - N_shift);
+            y_left(3) = (c1 + 2*c2*(y_left(1) - Y_0(1)) + 3*c3*(y_left(1) - Y_0(1))^2)*y_left(2);
+            flag = 1;
+        end
+        % -------1)  y' < constr ------------------------------------------
+        % if ((flag==1)&&(Psi(i) < constr))
+        % -------2) y' > constr -------------------------------------------
+        if ((flag==1)&&(Psi(i) > constr))
+        % -----------------------------------------------------------------
+            y_right(1) = Y_0(1) + (i-1 + N_shift)*dy;
+            y_right(2) = Psi(i + N_shift);
+            y_right(3) = (c1 + 2*c2*(y_right(1) - Y_0(1)) + 3*c3*(y_right(1) - Y_0(1))^2)*y_right(2);
+            break;
+        end
+    end
+    
+    for d=d_min:hd:d_max
+        cond = IsCurveExist(y_left, y_right, dy, d);
+        if (cond == true)
+            break;
+        end
+    end
+    
+    if not(cond)
+        N_shift = N_shift + 1;
+    end
+end
+
+
+% -------------Желание добиться более плавного поведения кривой------------
+% -------------Для этого эмпирически введено ограничение y_left(1) <= 0.4;
+% -------------ограничение y' < 0.9----------------------------------------
+% N_shift = 1;
+% 
+% while (true)
 %     flag = 0;
-%     % Ищем границы интервала, на котором нарушается ограничение
 %     for i=1:(N+1)
 %         if ((flag == 0)&&(Psi(i) >= constr))
 %             y_left(1) = Y_0(1) + (i-1 - N_shift)*dy;  % отступили N_shift шагов назад от критической точки
@@ -72,58 +118,24 @@ hd = 0.01;
 %             break;
 %         end
 %     end
-%     
-%     for d=d_min:hd:d_max
-%         cond = IsCurveExist(y_left, y_right, dy, d);
-%         if (cond == true)
-%             break;
-%         end
+%     if (y_left(1) <= 0.4)
+%         break;
 %     end
-%     
-%     if not(cond)
-%         N_shift = N_shift + 1;
+%     N_shift = N_shift + 1;
+% end
+% 
+% for d=d_min:hd:d_max
+%     cond = IsCurveExist(y_left, y_right, dy, d);
+%     if (cond == true)
+%         break;
 %     end
 % end
-
-
-% -------------Желание добиться более плавного поведения кривой------------
-% -------------Для этого эмпирически введено ограничение y_left(1) <= 0.4)
-N_shift = 1;
-
-while (true)
-    flag = 0;
-    for i=1:(N+1)
-        if ((flag == 0)&&(Psi(i) >= constr))
-            y_left(1) = Y_0(1) + (i-1 - N_shift)*dy;  % отступили N_shift шагов назад от критической точки
-            y_left(2) = Psi(i - N_shift);
-            y_left(3) = (c1 + 2*c2*(y_left(1) - Y_0(1)) + 3*c3*(y_left(1) - Y_0(1))^2)*y_left(2);
-            flag = 1;
-        end
-        if ((flag==1)&&(Psi(i) < constr))
-            y_right(1) = Y_0(1) + (i-1 + N_shift)*dy;
-            y_right(2) = Psi(i + N_shift);
-            y_right(3) = (c1 + 2*c2*(y_right(1) - Y_0(1)) + 3*c3*(y_right(1) - Y_0(1))^2)*y_right(2);
-            break;
-        end
-    end
-    if (y_left(1) <= 0.4)
-        break;
-    end
-    N_shift = N_shift + 1;
-end
-
-for d=d_min:hd:d_max
-    cond = IsCurveExist(y_left, y_right, dy, d);
-    if (cond == true)
-        break;
-    end
-end
 
 if (cond)
     % Находим интервал по d, на котором ограничение не нарушается
     d_lims = d_interval(y_left, y_right, dy, d);
     % Строим корректирующий отрезок при максимальном d
-    replace_part = curve_synthesis(y_left, y_right, dy, d_lims(2));
+    replace_part = curve_synthesis(y_left, y_right, dy, d_lims(1));
     x = y_left(1):dy:y_right(1);
     plot(x,replace_part,'r');
 else
